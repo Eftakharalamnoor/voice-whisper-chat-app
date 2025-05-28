@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Mic, Send, X, Trash2 } from 'lucide-react';
+import { Mic, Send, X, Trash2, Pause, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AudioWaveform from './AudioWaveform';
 
@@ -11,6 +11,7 @@ interface VoiceRecorderProps {
 
 const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className }) => {
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [hasRecording, setHasRecording] = useState(false);
   const [duration, setDuration] = useState(0);
   const [audioLevel, setAudioLevel] = useState(0);
@@ -62,6 +63,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
       
       mediaRecorder.start(100);
       setIsRecording(true);
+      setIsPaused(false);
       setDuration(0);
       
       // Start timer
@@ -71,7 +73,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
       
       // Start real-time audio level monitoring
       const monitorAudioLevel = () => {
-        if (analyserRef.current && isRecording) {
+        if (analyserRef.current && isRecording && !isPaused) {
           const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
           analyserRef.current.getByteFrequencyData(dataArray);
           
@@ -84,6 +86,9 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
           const normalizedLevel = Math.min(rms / 128, 1); // Normalize to 0-1
           
           setAudioLevel(normalizedLevel);
+        }
+        
+        if (isRecording) {
           animationRef.current = requestAnimationFrame(monitorAudioLevel);
         }
       };
@@ -93,12 +98,37 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
     } catch (error) {
       console.error('Error accessing microphone:', error);
     }
-  }, [isRecording]);
+  }, [isRecording, isPaused]);
+
+  const pauseRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording && !isPaused) {
+      mediaRecorderRef.current.pause();
+      setIsPaused(true);
+      setAudioLevel(0);
+      
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    }
+  }, [isRecording, isPaused]);
+
+  const resumeRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording && isPaused) {
+      mediaRecorderRef.current.resume();
+      setIsPaused(false);
+      
+      // Resume timer
+      timerRef.current = setInterval(() => {
+        setDuration(prev => prev + 0.1);
+      }, 100);
+    }
+  }, [isRecording, isPaused]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      setIsPaused(false);
       setHasRecording(true);
       setAudioLevel(0);
       
@@ -122,6 +152,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
 
   const cancelRecording = useCallback(() => {
     setIsRecording(false);
+    setIsPaused(false);
     setHasRecording(false);
     setDuration(0);
     setAudioLevel(0);
@@ -178,28 +209,40 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
     };
   }, []);
 
-  if (isRecording) {
+  if (isRecording || isPaused) {
     return (
-      <div className={cn("flex items-center gap-3 p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-2xl border border-red-200", className)}>
+      <div className={cn("flex items-center gap-4 p-4 bg-white rounded-3xl shadow-lg border", className)}>
         <button
           onClick={cancelRecording}
-          className="p-3 bg-red-500 hover:bg-red-600 text-white rounded-full transition-all duration-200 hover:scale-105"
+          className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full transition-all duration-200"
         >
-          <X className="w-5 h-5" />
+          <Trash2 className="w-5 h-5" />
         </button>
         
-        <div className="flex-1 flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-            <span className="text-red-700 font-medium">{formatTime(duration)}</span>
-          </div>
+        <div className="flex-1 flex items-center gap-4">
+          <span className="text-lg font-mono text-gray-800 min-w-[60px]">{formatTime(duration)}</span>
           
-          <AudioWaveform audioLevel={audioLevel} isRecording={true} />
+          <AudioWaveform 
+            audioLevel={isPaused ? 0 : audioLevel} 
+            isRecording={!isPaused} 
+            className="flex-1"
+          />
         </div>
         
         <button
+          onClick={isPaused ? resumeRecording : pauseRecording}
+          className="p-3 bg-red-500 hover:bg-red-600 text-white rounded-full transition-all duration-200"
+        >
+          {isPaused ? (
+            <Play className="w-5 h-5 ml-0.5" />
+          ) : (
+            <Pause className="w-5 h-5" />
+          )}
+        </button>
+        
+        <button
           onClick={stopRecording}
-          className="p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full transition-all duration-200 hover:scale-105"
+          className="p-3 bg-green-500 hover:bg-green-600 text-white rounded-full transition-all duration-200 shadow-md"
         >
           <Send className="w-5 h-5" />
         </button>
