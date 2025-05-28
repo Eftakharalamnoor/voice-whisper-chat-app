@@ -21,6 +21,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const animationRef = useRef<number | null>(null);
 
   const startRecording = useCallback(async () => {
     try {
@@ -34,12 +35,13 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
       
       streamRef.current = stream;
       
-      // Set up audio analysis for waveform
+      // Set up audio analysis for real-time waveform
       const audioContext = new AudioContext();
       const analyser = audioContext.createAnalyser();
       const source = audioContext.createMediaStreamSource(stream);
       
       analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
       source.connect(analyser);
       
       audioContextRef.current = audioContext;
@@ -67,16 +69,22 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
         setDuration(prev => prev + 0.1);
       }, 100);
       
-      // Start audio level monitoring
+      // Start real-time audio level monitoring
       const monitorAudioLevel = () => {
         if (analyserRef.current && isRecording) {
           const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
           analyserRef.current.getByteFrequencyData(dataArray);
           
-          const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
-          setAudioLevel(average / 255);
+          // Calculate RMS (Root Mean Square) for more accurate volume detection
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i] * dataArray[i];
+          }
+          const rms = Math.sqrt(sum / dataArray.length);
+          const normalizedLevel = Math.min(rms / 128, 1); // Normalize to 0-1
           
-          requestAnimationFrame(monitorAudioLevel);
+          setAudioLevel(normalizedLevel);
+          animationRef.current = requestAnimationFrame(monitorAudioLevel);
         }
       };
       
@@ -92,9 +100,14 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       setHasRecording(true);
+      setAudioLevel(0);
       
       if (timerRef.current) {
         clearInterval(timerRef.current);
+      }
+      
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
       }
       
       if (streamRef.current) {
@@ -111,10 +124,15 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
     setIsRecording(false);
     setHasRecording(false);
     setDuration(0);
+    setAudioLevel(0);
     audioChunksRef.current = [];
     
     if (timerRef.current) {
       clearInterval(timerRef.current);
+    }
+    
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
     }
     
     if (streamRef.current) {
@@ -132,6 +150,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
       onSendAudio(audioBlob, duration);
       setHasRecording(false);
       setDuration(0);
+      setAudioLevel(0);
       audioChunksRef.current = [];
     }
   }, [onSendAudio, duration]);
@@ -146,6 +165,9 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
+      }
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
       }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
