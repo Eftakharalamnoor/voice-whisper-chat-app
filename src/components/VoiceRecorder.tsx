@@ -13,7 +13,6 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
   const [isRecording, setIsRecording] = useState(false);
   const [hasRecording, setHasRecording] = useState(false);
   const [duration, setDuration] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
