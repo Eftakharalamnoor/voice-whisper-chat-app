@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Mic, Send, X, Trash2, Pause, Play, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AudioWaveform from './AudioWaveform';
+import { Progress } from '@/components/ui/progress';
 
 interface VoiceRecorderProps {
   onSendAudio: (audioBlob: Blob, duration: number) => void;
@@ -22,6 +23,10 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const animationRef = useRef<number | null>(null);
+
+  // Maximum recording duration in seconds (e.g., 60 seconds)
+  const maxDuration = 60;
+  const progressPercentage = (duration / maxDuration) * 100;
 
   const startRecording = useCallback(async () => {
     try {
@@ -67,7 +72,15 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
       
       // Start timer
       timerRef.current = setInterval(() => {
-        setDuration(prev => prev + 0.1);
+        setDuration(prev => {
+          const newDuration = prev + 0.1;
+          // Auto-stop at max duration
+          if (newDuration >= maxDuration) {
+            stopRecording();
+            return maxDuration;
+          }
+          return newDuration;
+        });
       }, 100);
       
       // Start real-time audio level monitoring
@@ -118,7 +131,14 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
       
       // Resume timer
       timerRef.current = setInterval(() => {
-        setDuration(prev => prev + 0.1);
+        setDuration(prev => {
+          const newDuration = prev + 0.1;
+          if (newDuration >= maxDuration) {
+            stopRecording();
+            return maxDuration;
+          }
+          return newDuration;
+        });
       }, 100);
     }
   }, [isRecording, isPaused]);
@@ -212,15 +232,29 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
   if (isRecording || isPaused) {
     return (
       <div className="fixed inset-0 bg-[#128C7E] z-50 flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 text-white">
-          <div className="flex items-center gap-4">
-            <button onClick={cancelRecording}>
-              <X className="w-6 h-6" />
-            </button>
-            <span className="text-lg font-medium">Recording...</span>
+        {/* Header with Progress */}
+        <div className="p-4 text-white">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-4">
+              <button onClick={cancelRecording}>
+                <X className="w-6 h-6" />
+              </button>
+              <span className="text-lg font-medium">Recording...</span>
+            </div>
+            <span className="text-lg font-mono">{formatTime(duration)}</span>
           </div>
-          <span className="text-lg font-mono">{formatTime(duration)}</span>
+          
+          {/* Progress Bar */}
+          <div className="w-full">
+            <Progress 
+              value={Math.min(progressPercentage, 100)} 
+              className="h-2 bg-green-600/30"
+            />
+            <div className="flex justify-between text-xs text-green-200 mt-1">
+              <span>0:00</span>
+              <span>{formatTime(maxDuration)}</span>
+            </div>
+          </div>
         </div>
         
         {/* Slide to Cancel */}
