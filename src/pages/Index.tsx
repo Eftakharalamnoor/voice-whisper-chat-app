@@ -33,7 +33,7 @@ const Index = () => {
     {
       id: '3',
       type: 'text',
-      content: 'Try out the voice recording feature below!',
+      content: 'Try the voice recording feature!',
       isSent: false,
       timestamp: new Date(Date.now() - 1000 * 60 * 1)
     }
@@ -76,39 +76,45 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-100">
+      {/* WhatsApp Header */}
+      <div className="bg-[#128C7E] text-white shadow-md sticky top-0 z-10">
         <div className="max-w-md mx-auto flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">JD</span>
+            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+              <span className="text-gray-600 font-bold text-sm">JD</span>
             </div>
             <div>
-              <h1 className="font-semibold text-gray-900">John Doe</h1>
-              <p className="text-xs text-green-500">Online</p>
+              <h1 className="font-semibold text-white">John Doe</h1>
+              <p className="text-xs text-green-200">online</p>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <Phone className="w-5 h-5 text-gray-600" />
+            <button className="p-2 hover:bg-green-700 rounded-full transition-colors">
+              <Phone className="w-5 h-5" />
             </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <Video className="w-5 h-5 text-gray-600" />
+            <button className="p-2 hover:bg-green-700 rounded-full transition-colors">
+              <Video className="w-5 h-5" />
             </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <MoreVertical className="w-5 h-5 text-gray-600" />
+            <button className="p-2 hover:bg-green-700 rounded-full transition-colors">
+              <MoreVertical className="w-5 h-5" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Chat Container */}
-      <div className="max-w-md mx-auto bg-white min-h-screen flex flex-col shadow-xl">
-        {/* Messages */}
-        <div className="flex-1 p-4 overflow-y-auto bg-gradient-to-b from-gray-50/50 to-white">
-          <div className="space-y-1">
+      <div className="max-w-md mx-auto bg-[#ECE5DD] min-h-screen flex flex-col">
+        {/* WhatsApp Chat Background Pattern */}
+        <div 
+          className="flex-1 overflow-y-auto"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundSize: '60px 60px'
+          }}
+        >
+          <div className="p-4 space-y-1">
             {messages.map((message) => (
               <ChatMessage
                 key={message.id}
@@ -129,20 +135,6 @@ const Index = () => {
           onSendMessage={handleSendMessage}
           onSendAudio={handleSendAudio}
         />
-      </div>
-
-      {/* Demo Instructions */}
-      <div className="max-w-md mx-auto p-4">
-        <div className="bg-gradient-to-r from-emerald-100 to-blue-100 rounded-2xl p-4 border border-emerald-200">
-          <div className="flex items-center gap-2 mb-2">
-            <MessageCircle className="w-5 h-5 text-emerald-600" />
-            <h3 className="font-semibold text-emerald-900">Voice Recording Demo</h3>
-          </div>
-          <p className="text-sm text-emerald-800">
-            Click and hold the microphone button to record a voice message, just like WhatsApp! 
-            You can also type text messages normally.
-          </p>
-        </div>
       </div>
     </div>
   );

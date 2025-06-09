@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Mic, Send, X, Trash2, Pause, Play } from 'lucide-react';
+import { Mic, Send, X, Trash2, Pause, Play, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AudioWaveform from './AudioWaveform';
 
@@ -209,78 +208,104 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSendAudio, className })
     };
   }, []);
 
+  // WhatsApp Recording Interface
   if (isRecording || isPaused) {
     return (
-      <div className={cn("flex items-center gap-4 p-4 bg-white rounded-3xl shadow-lg border", className)}>
-        <button
-          onClick={cancelRecording}
-          className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full transition-all duration-200"
-        >
-          <Trash2 className="w-5 h-5" />
-        </button>
-        
-        <div className="flex-1 flex items-center gap-4">
-          <span className="text-lg font-mono text-gray-800 min-w-[60px]">{formatTime(duration)}</span>
-          
-          <AudioWaveform 
-            audioLevel={isPaused ? 0 : audioLevel} 
-            isRecording={!isPaused} 
-            className="flex-1"
-          />
+      <div className="fixed inset-0 bg-[#128C7E] z-50 flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 text-white">
+          <div className="flex items-center gap-4">
+            <button onClick={cancelRecording}>
+              <X className="w-6 h-6" />
+            </button>
+            <span className="text-lg font-medium">Recording...</span>
+          </div>
+          <span className="text-lg font-mono">{formatTime(duration)}</span>
         </div>
         
-        <button
-          onClick={isPaused ? resumeRecording : pauseRecording}
-          className="p-3 bg-red-500 hover:bg-red-600 text-white rounded-full transition-all duration-200"
-        >
-          {isPaused ? (
-            <Play className="w-5 h-5 ml-0.5" />
-          ) : (
-            <Pause className="w-5 h-5" />
-          )}
-        </button>
+        {/* Slide to Cancel */}
+        <div className="flex-1 flex flex-col justify-center items-center px-8">
+          <div className="text-white text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <ChevronLeft className="w-5 h-5" />
+              <span className="text-lg">Slide to cancel</span>
+            </div>
+          </div>
+          
+          {/* Waveform */}
+          <div className="w-full max-w-sm">
+            <AudioWaveform 
+              audioLevel={isPaused ? 0 : audioLevel} 
+              isRecording={!isPaused} 
+              className="mb-8"
+            />
+          </div>
+        </div>
         
-        <button
-          onClick={stopRecording}
-          className="p-3 bg-green-500 hover:bg-green-600 text-white rounded-full transition-all duration-200 shadow-md"
-        >
-          <Send className="w-5 h-5" />
-        </button>
+        {/* Bottom Controls */}
+        <div className="flex items-center justify-between p-6">
+          <button
+            onClick={cancelRecording}
+            className="p-4 bg-red-500 hover:bg-red-600 text-white rounded-full transition-all duration-200"
+          >
+            <Trash2 className="w-6 h-6" />
+          </button>
+          
+          <button
+            onClick={isPaused ? resumeRecording : pauseRecording}
+            className="p-6 bg-white text-[#128C7E] rounded-full transition-all duration-200 shadow-lg"
+          >
+            {isPaused ? (
+              <Play className="w-8 h-8 ml-1" />
+            ) : (
+              <Pause className="w-8 h-8" />
+            )}
+          </button>
+          
+          <button
+            onClick={stopRecording}
+            className="p-4 bg-[#25D366] hover:bg-[#20B558] text-white rounded-full transition-all duration-200 shadow-lg"
+          >
+            <Send className="w-6 h-6" />
+          </button>
+        </div>
       </div>
     );
   }
 
+  // Recording Preview
   if (hasRecording) {
     return (
-      <div className={cn("flex items-center gap-3 p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-2xl border border-emerald-200", className)}>
+      <div className="flex items-center gap-3 p-3 bg-[#F0F2F5] rounded-2xl border">
         <button
           onClick={cancelRecording}
-          className="p-3 bg-gray-500 hover:bg-gray-600 text-white rounded-full transition-all duration-200 hover:scale-105"
+          className="p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full transition-all duration-200"
         >
-          <Trash2 className="w-5 h-5" />
+          <Trash2 className="w-4 h-4" />
         </button>
         
         <div className="flex-1 flex items-center gap-3">
-          <span className="text-emerald-700 font-medium">{formatTime(duration)}</span>
+          <span className="text-[#128C7E] font-medium text-sm">{formatTime(duration)}</span>
           <AudioWaveform audioLevel={0} isRecording={false} />
         </div>
         
         <button
           onClick={sendRecording}
-          className="p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full transition-all duration-200 hover:scale-105 shadow-lg"
+          className="p-2 bg-[#128C7E] hover:bg-[#0F7B6C] text-white rounded-full transition-all duration-200 shadow-lg"
         >
-          <Send className="w-5 h-5" />
+          <Send className="w-4 h-4" />
         </button>
       </div>
     );
   }
 
+  // Microphone Button
   return (
     <button
       onMouseDown={startRecording}
       onTouchStart={startRecording}
       className={cn(
-        "p-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-full transition-all duration-200 hover:scale-105 shadow-lg active:scale-95",
+        "p-3 bg-[#128C7E] hover:bg-[#0F7B6C] text-white rounded-full transition-all duration-200 shadow-lg active:scale-95",
         className
       )}
     >

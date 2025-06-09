@@ -64,11 +64,17 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioBlob, duration, classNam
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  // Generate static waveform bars for voice message
+  const waveformBars = Array.from({ length: 20 }, (_, i) => {
+    const heights = [8, 12, 16, 20, 24, 18, 14, 10, 6, 8, 12, 18, 22, 16, 12, 8, 6, 10, 14, 8];
+    return heights[i] || 8;
+  });
+
   return (
-    <div className={cn("flex items-center gap-3 p-3 bg-white rounded-2xl shadow-sm border", className)}>
+    <div className={cn("flex items-center gap-3 py-1", className)}>
       <button
         onClick={togglePlay}
-        className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full transition-all duration-200 hover:scale-105"
+        className="p-2 bg-[#128C7E] hover:bg-[#0F7B6C] text-white rounded-full transition-all duration-200 flex-shrink-0"
       >
         {isPlaying ? (
           <Pause className="w-4 h-4" />
@@ -77,15 +83,25 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioBlob, duration, classNam
         )}
       </button>
       
-      <div className="flex-1 flex items-center gap-3">
-        <div className="flex-1 bg-gray-200 rounded-full h-2 relative overflow-hidden">
-          <div 
-            className="bg-emerald-500 h-full rounded-full transition-all duration-100"
-            style={{ width: `${progress}%` }}
-          />
+      <div className="flex-1 flex items-center gap-2">
+        {/* WhatsApp-style waveform */}
+        <div className="flex items-center gap-0.5 flex-1">
+          {waveformBars.map((height, index) => {
+            const isActive = (index / waveformBars.length) * 100 <= progress;
+            return (
+              <div
+                key={index}
+                className={cn(
+                  "w-1 rounded-full transition-colors duration-200",
+                  isActive ? "bg-[#128C7E]" : "bg-gray-300"
+                )}
+                style={{ height: `${height}px` }}
+              />
+            );
+          })}
         </div>
         
-        <span className="text-sm text-gray-600 font-medium min-w-[40px]">
+        <span className="text-xs text-gray-600 font-medium min-w-[35px] text-right">
           {formatTime(isPlaying ? currentTime : duration)}
         </span>
       </div>

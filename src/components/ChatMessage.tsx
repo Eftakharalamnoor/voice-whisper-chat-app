@@ -28,34 +28,39 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
   return (
     <div className={cn(
-      "flex w-full mb-4",
+      "flex w-full mb-2",
       isSent ? "justify-end" : "justify-start",
       className
     )}>
       <div className={cn(
-        "max-w-[80%] rounded-2xl p-3",
+        "max-w-[85%] rounded-lg p-2 shadow-sm relative",
         isSent 
-          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white ml-12" 
-          : "bg-white shadow-sm border mr-12"
+          ? "bg-[#DCF8C6] text-black ml-12" 
+          : "bg-white text-black mr-12"
       )}>
+        {/* WhatsApp message tail */}
+        <div className={cn(
+          "absolute top-0 w-0 h-0",
+          isSent 
+            ? "right-[-8px] border-l-[8px] border-l-[#DCF8C6] border-t-[8px] border-t-transparent" 
+            : "left-[-8px] border-r-[8px] border-r-white border-t-[8px] border-t-transparent"
+        )} />
+        
         {type === 'text' ? (
-          <p className="text-sm">{content}</p>
+          <p className="text-sm leading-relaxed">{content}</p>
         ) : (
           audioBlob && audioDuration && (
             <AudioPlayer 
               audioBlob={audioBlob} 
               duration={audioDuration}
-              className={cn(
-                "bg-transparent border-0 shadow-none",
-                isSent && "text-white"
-              )}
+              className="bg-transparent border-0 shadow-none p-0"
             />
           )
         )}
         
         <div className={cn(
-          "text-xs mt-2 opacity-70",
-          isSent ? "text-emerald-100" : "text-gray-500"
+          "text-xs mt-1 opacity-70 text-right",
+          "text-gray-500"
         )}>
           {formatTime(timestamp)}
         </div>
